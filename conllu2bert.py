@@ -77,13 +77,12 @@ def merge(bert_file, merge_file, sents, merge_type='sum'):
         item = bert["features"][i]
         if item["token"]=="[CLS]" or item["token"]=="[SEP]":
           merged["features"].append(item)
-          continue
-        if item["token"].startswith("##") and not (len(merged["features"])-1<len(sents[n]) and item["token"] == sents[n][len(merged["features"])-1]):
+        elif item["token"].startswith("##") and not (len(merged["features"])-1<len(sents[n]) and item["token"] == sents[n][len(merged["features"])-1]):
           tmp_layers = []
           for j, layer in enumerate(merged["features"][-1]["layers"]):
             #merged["features"][-1]["layers"][j]["values"] = list(np.array(layer["values"]) + np.array(item["layers"][j]["values"]))
             # j-th layer
-            tmp_layers.append(np.array(layer["values"]))
+            tmp_layers.append([np.array(layer["values"])])
             tmp_layers[j].append(np.array(item["layers"][j]["values"]))
 
           item = bert["features"][i+1]
