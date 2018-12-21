@@ -37,15 +37,14 @@ def bert(raw_file, bert_file, gpu, layer, model, max_seq='256',batch_size='8'):
   print (cmd)
   os.system(cmd)
 
-def list_to_bert(sents, bert_config_file, vocab_file, init_checkpoint, layer, max_seq=256, batch_size=8):
+def list_to_bert(sents, bert_config_file, vocab_file, init_checkpoint, bert_file, layer, max_seq=256, batch_size=8):
   output_file = bert_file
   bert_layer = layer
   max_seq_length = max_seq
-  flags = list2bert.Args(vocab_file, bert_config_file, init_checkpoint, output_file, max_seq_length, bert_layer)
-  flags.batch_size = batch_size
-  flags.map_input = map_input
+  args = list2bert.Args(vocab_file, bert_config_file, init_checkpoint, output_file, max_seq_length, bert_layer)
+  args.batch_size = batch_size
 
-  list2bert.list2bert(sents)
+  list2bert.list2bert(sents, args)
   
 def merge(bert_file, merge_file, sents):
   n = 0
@@ -125,6 +124,6 @@ for sent in load_conllu(args.conll_file):
   sents.append(sent)
 print ("Total {} Sentences".format(len(sents)))
 
-list_to_bert(sents, args.config, args.vocab, args.model, args.layer, 
+list_to_bert(sents, args.config, args.vocab, args.model, args.bert_file, args.layer, 
               max_seq=args.max_seq, batch_size=args.batch)
 merge(args.bert_file, args.merge_file, sents)

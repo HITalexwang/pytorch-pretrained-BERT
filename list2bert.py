@@ -206,15 +206,13 @@ class Args(object):
   def __init__(self, vocab_file, bert_config_file, init_checkpoint, 
                 output_file, max_seq_length, bert_layer):
     self.layers = "-1"
-    self.bert_config_file = None
-    self.vocab_file = None
+    self.bert_config_file = bert_config_file
+    self.vocab_file = vocab_file
     self.do_lower_case = True
-    self.master = None
-    self.num_tpu_cores = 8
-    self.max_seq_length = 512
-    self.init_checkpoint = None
-    self.batch_size = 32
-    self.output_file = None
+    self.max_seq_length = max_seq_length
+    self.init_checkpoint = init_checkpoint
+    self.batch_size = 8
+    self.output_file = output_file
     self.local_rank = -1
     self.no_cuda = False
 
@@ -227,7 +225,8 @@ def list2bert(sents, args):
         n_gpu = 1
         # Initializes the distributed backend which will take care of sychronizing nodes/GPUs
         torch.distributed.init_process_group(backend='nccl')
-    logger.info("device", device, "n_gpu", n_gpu, "distributed training", bool(args.local_rank != -1))
+    print ("n_gpu: {}".format(n_gpu))
+    #logger.info("n_gpu", n_gpu, "distributed training", bool(args.local_rank != -1))
 
     layer_indexes = [int(x) for x in args.layers.split(",")]
 
