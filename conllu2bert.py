@@ -8,7 +8,7 @@ import re
 import numpy as np
 import json
 import argparse
-from bert_gan import *
+import list2bert
 
 def load_conllu(file):
   with codecs.open(file, 'rb') as f:
@@ -37,20 +37,15 @@ def bert(raw_file, bert_file, gpu, layer, model, max_seq='256',batch_size='8'):
   print (cmd)
   os.system(cmd)
 
-def list_to_bert(sents, bert_file, layer, map_model, bert_model, max_seq=256, batch_size=8, map_input=False):
-  model_path = map_model
-  bert_config_file = bert_model+'/bert_config.json'
-  vocab_file = bert_model+'/vocab.txt'
-  init_checkpoint = bert_model+'/bert_model'
+def list_to_bert(sents, bert_config_file, vocab_file, init_checkpoint, layer, max_seq=256, batch_size=8):
   output_file = bert_file
   bert_layer = layer
   max_seq_length = max_seq
-  flags = Args(model_path, vocab_file, bert_config_file, init_checkpoint, output_file, max_seq_length, bert_layer)
+  flags = list2bert.Args(vocab_file, bert_config_file, init_checkpoint, output_file, max_seq_length, bert_layer)
   flags.batch_size = batch_size
   flags.map_input = map_input
 
-  adv_bert = AdvBert(flags)
-  adv_bert.list2bert(sents)
+  list2bert.list2bert(sents)
   
 def merge(bert_file, merge_file, sents):
   n = 0
@@ -113,26 +108,23 @@ def merge(bert_file, merge_file, sents):
 #  exit(1)
 
 parser = argparse.ArgumentParser(description='CoNLLU to BERT')
-parser.add_argument("bert_model", type=str, default=None, help="bert model")
+parser.add_argument("--config", type=str, default=None, help="bert config")
+parser.add_argument("--vocab", type=str, default=None, help="bert vocab")
+parser.add_argument("--model", type=str, default=None, help="bert model")
 parser.add_argument("conll_file", type=str, default=None, help="input conllu file")
 parser.add_argument("bert_file", type=str, default=None, help="orig bert file")
 parser.add_argument("merge_file", type=str, default=None, help="merged bert file")
-parser.add_argument("--mapping", type=str, default=None, help="mapping model")
 parser.add_argument("--layer", type=int, default=-1, help="output bert layer")
-parser.add_argument("--map_input", default=False, action='store_true', help="Apply mapping to the BERT input embeddings?")
+parser.add_argument("--max_seq", type=int, default=256, help="output bert layer")
+parser.add_argument("--batch", type=int, default=8, help="output bert layer")
 args = parser.parse_args()
-
-map_model = args.mapping
-bert_model = args.bert_model
-layer = args.layer
-conll_file = args.conll_file
-bert_file = args.bert_file
-merge_file = args.merge_file
 
 n = 0
 sents = []
-for sent in load_conllu(conll_file):
+for sent in load_conllu(args.conll_file):
   sents.append(sent)
 print ("Total {} Sentences".format(len(sents)))
-list_to_bert(sents,bert_file,layer,map_model, bert_model,max_seq=512,map_input=args.map_input)
-merge(bert_file, merge_file, sents)
+
+list_to_bert(sents, args.config, args.vocab, args.model, args.layer, 
+              max_seq=args.max_seq, batch_size=args.batch)
+merge(args.bert_file, args.merge_file, sents)
