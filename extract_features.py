@@ -227,7 +227,7 @@ def main():
         n_gpu = 1
         # Initializes the distributed backend which will take care of sychronizing nodes/GPUs
         torch.distributed.init_process_group(backend='nccl')
-    logger.info("device", device, "n_gpu", n_gpu, "distributed training", bool(args.local_rank != -1))
+    #logger.info("device", device, "n_gpu", n_gpu, "distributed training", bool(args.local_rank != -1))
 
     layer_indexes = [int(x) for x in args.layers.split(",")]
 
