@@ -216,7 +216,7 @@ class Args(object):
     self.local_rank = -1
     self.no_cuda = False
 
-def list2bert(sents, args):
+def list2bert(sents, args, emb=None, tok2id=None):
     if args.local_rank == -1 or args.no_cuda:
         device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
         n_gpu = torch.cuda.device_count()
@@ -247,6 +247,16 @@ def list2bert(sents, args):
     model = BertModel(bert_config)
     if args.init_checkpoint is not None:
         model.load_state_dict(torch.load(args.init_checkpoint, map_location='cpu'))
+    if emb and tok2id:
+        n_rep = 0
+        print ("Replacing BERT input with input embeddings")
+        for tok in tok2id:
+            if tok in tokenizer.vocab:
+                n_rep += 1
+                bert_id = tokenizer.vocab[tok]
+                emb_id = tok2id[tok]
+                model.embeddings.word_embeddings.weight[bert_id] = torch.from_numpy(emb[emb_id])
+        print ("Total input embeddings: {}, replaced embeddings: {}".format(len(tok2id), n_rep))
     model.to(device)
 
     if args.local_rank != -1:

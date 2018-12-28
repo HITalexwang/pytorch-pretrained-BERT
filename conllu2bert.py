@@ -25,26 +25,39 @@ def load_conllu(file):
     if buff:
       yield buff
 
+def load_emb(file):
+  with codecs.open(file, 'r') as fi:
+    line = fi.readline()
+    n, dim = line.strip().split()
+    print ('Loading input embedding from {} with number:{}, dimension:{}'.format(file, n, dim))
+    embeddings = np.zeros([int(n), int(dim)], dtype=np.float32)
+    line = fi.readline()
+    tok2id = {}
+    cur_idx = 0
+    while line:
+      line = line.split(' ')
+      embeddings[cur_idx] = line[1:]
+      tokens.append(line[0])
+      tok2id[line[0]] = cur_idx
+      cur_idx += 1
+      line = fi.readline()
+  print ('Finish loading input embeddings, map length:{}, matrix type:{}'.format(len(tok2id), embeddings.shape))
+  return embeddings, tok2id
+      
 def to_raw(sents, file):
   with codecs.open(file, 'w') as fo:
     for sent in sents:
       fo.write((" ".join(sent)).encode('utf-8')+'\n')
 
-def bert(raw_file, bert_file, gpu, layer, model, max_seq='256',batch_size='8'):
-  dict = {'gpu':gpu, 'input':raw_file, 'output':bert_file, 'layer':layer, 'BERT_BASE_DIR':model, 'max_seq':max_seq, 'batch_size':batch_size}
-  cmd = "source /users2/yxwang/work/env/py2.7/bin/activate ; CUDA_VISIBLE_DEVICES={gpu} python extract_features.py --input_file={input} --output_file={output} --vocab_file={BERT_BASE_DIR}/vocab.txt --bert_config_file={BERT_BASE_DIR}/bert_config.json --init_checkpoint={BERT_BASE_DIR}/bert_model.ckpt --layers={layer} --max_seq_length={max_seq} --batch_size={batch_size}".format(**dict)
-  #cmd = "./scripts/extract.sh {gpu} {input} {output} {layer}".format(**dict)
-  print (cmd)
-  os.system(cmd)
-
-def list_to_bert(sents, bert_config_file, vocab_file, init_checkpoint, bert_file, layer, max_seq=256, batch_size=8):
+def list_to_bert(sents, bert_config_file, vocab_file, init_checkpoint, bert_file, layer, 
+                  max_seq=256, batch_size=8, emb=None, tok2id=None):
   output_file = bert_file
   bert_layer = layer
   max_seq_length = max_seq
   args = list2bert.Args(vocab_file, bert_config_file, init_checkpoint, output_file, max_seq_length, bert_layer)
   args.batch_size = batch_size
 
-  list2bert.list2bert(sents, args)
+  list2bert.list2bert(sents, args, emb=emb, tok2id=tok2id)
   
 def merge(bert_file, merge_file, sents):
   n = 0
@@ -113,6 +126,7 @@ parser.add_argument("--model", type=str, default=None, help="bert model")
 parser.add_argument("conll_file", type=str, default=None, help="input conllu file")
 parser.add_argument("bert_file", type=str, default=None, help="orig bert file")
 parser.add_argument("merge_file", type=str, default=None, help="merged bert file")
+parser.add_argument("emb_file", type=str, default=None, help="use this embedding to replace bert input embedding")
 parser.add_argument("--layer", type=int, default=-1, help="output bert layer")
 parser.add_argument("--max_seq", type=int, default=256, help="output bert layer")
 parser.add_argument("--batch", type=int, default=8, help="output bert layer")
@@ -124,6 +138,10 @@ for sent in load_conllu(args.conll_file):
   sents.append(sent)
 print ("Total {} Sentences".format(len(sents)))
 
+embeddings, tok2id = None
+if args.emb_file:
+  embeddings, tok2id = load_emb(args.emb_file)
+
 list_to_bert(sents, args.config, args.vocab, args.model, args.bert_file, args.layer, 
-              max_seq=args.max_seq, batch_size=args.batch)
+              max_seq=args.max_seq, batch_size=args.batch, emb=embeddings, tok2id=tok2id)
 merge(args.bert_file, args.merge_file, sents)
