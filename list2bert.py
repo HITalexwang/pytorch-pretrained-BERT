@@ -247,7 +247,7 @@ def list2bert(sents, args, emb=None, tok2id=None):
     model = BertModel(bert_config)
     if args.init_checkpoint is not None:
         model.load_state_dict(torch.load(args.init_checkpoint, map_location='cpu'))
-    if emb and tok2id:
+    if emb is not None and tok2id is not None:
         n_rep = 0
         print ("Replacing BERT input with input embeddings")
         for tok in tok2id:

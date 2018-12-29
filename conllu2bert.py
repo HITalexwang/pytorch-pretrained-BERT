@@ -37,7 +37,7 @@ def load_emb(file):
     while line:
       line = line.split(' ')
       embeddings[cur_idx] = line[1:]
-      tokens.append(line[0])
+      #tokens.append(line[0])
       tok2id[line[0]] = cur_idx
       cur_idx += 1
       line = fi.readline()
@@ -126,7 +126,7 @@ parser.add_argument("--model", type=str, default=None, help="bert model")
 parser.add_argument("conll_file", type=str, default=None, help="input conllu file")
 parser.add_argument("bert_file", type=str, default=None, help="orig bert file")
 parser.add_argument("merge_file", type=str, default=None, help="merged bert file")
-parser.add_argument("emb_file", type=str, default=None, help="use this embedding to replace bert input embedding")
+parser.add_argument("--emb_file", type=str, default=None, help="use this embedding to replace bert input embedding")
 parser.add_argument("--layer", type=int, default=-1, help="output bert layer")
 parser.add_argument("--max_seq", type=int, default=256, help="output bert layer")
 parser.add_argument("--batch", type=int, default=8, help="output bert layer")
@@ -138,7 +138,7 @@ for sent in load_conllu(args.conll_file):
   sents.append(sent)
 print ("Total {} Sentences".format(len(sents)))
 
-embeddings, tok2id = None
+embeddings, tok2id = None, None
 if args.emb_file:
   embeddings, tok2id = load_emb(args.emb_file)
 
